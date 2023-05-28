@@ -92,6 +92,25 @@ class WaymoToKITTI(object):
         for line in lines:
             self.tfrecord_pathnames.append(os.path.join(self.load_dir, 'raw_data', split, line.strip()))
 
+        if split == 'training':
+            imageset = 'train_org.txt'
+        elif split == 'validation':
+            imageset = 'val_org.txt'
+        else:
+            imageset = 'test_org.txt'
+
+        self.sampled_dict = dict()
+        set_path = os.path.join(self.load_dir, 'ImageSets', imageset)
+        f = open(set_path, 'r')
+        lines = f.readlines()
+        f.close()
+        for line in lines:
+            parsed = line.strip().split(' ')
+            if parsed is not None:
+                seg, id = parsed
+                if seg not in self.sampled_dict:
+                    self.sampled_dict[seg] = []
+                self.sampled_dict[seg].append(id)
 
     def convert(self):
         print("start converting ...")
@@ -126,6 +145,9 @@ class WaymoToKITTI(object):
         self.create_folder()
 
         for frame_idx, data in enumerate(dataset):
+            file_name = str(file_idx).zfill(3) + str(frame_idx).zfill(3)
+            if file_name not in self.sampled_dict[tfrecord_name]:
+                continue
 
             frame = open_dataset.Frame()
             frame.ParseFromString(bytearray(data.numpy()))
@@ -133,7 +155,7 @@ class WaymoToKITTI(object):
                 continue
 
             # save images
-            # self.save_image(frame, file_idx, frame_idx)
+            self.save_image(frame, file_idx, frame_idx)
 
             # parse calibration files
             self.save_calib(frame, file_idx, frame_idx)
@@ -158,10 +180,11 @@ class WaymoToKITTI(object):
                 :return:
         """
         for img in frame.images:
-            img_path = self.image_save_dir + str(img.name - 1) + '/' + str(file_idx).zfill(3) + str(frame_idx).zfill(3) + '.png'
-            img = cv2.imdecode(np.frombuffer(img.image, np.uint8), cv2.IMREAD_COLOR)
-            rgb_img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-            plt.imsave(img_path, rgb_img, format='png')
+            if img.name == 1:
+                img_path = self.image_save_dir + str(img.name - 1) + '/' + str(file_idx).zfill(3) + str(frame_idx).zfill(3) + '.png'
+                img = cv2.imdecode(np.frombuffer(img.image, np.uint8), cv2.IMREAD_COLOR)
+                rgb_img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                plt.imsave(img_path, rgb_img, format='png')
 
     def save_calib(self, frame, file_idx, frame_idx):
         """ parse and save the calibration data
@@ -349,7 +372,7 @@ class WaymoToKITTI(object):
                 :param frame_idx: the current frame number
                 :return:
                 """
-        fp_label_all = open(self.label_all_save_dir + '/'  + str(file_idx).zfill(3) + str(frame_idx).zfill(3) + '.txt', 'w+')
+        fp_label_all = open(self.label_all_save_dir + '/' + str(file_idx).zfill(3) + str(frame_idx).zfill(3) + '.txt', 'w+')
         # preprocess bounding box data
         id_to_bbox = dict()
         id_to_name = dict()
@@ -363,8 +386,6 @@ class WaymoToKITTI(object):
                             label.box.center_x + label.box.length / 2, label.box.center_y + label.box.width / 2]
                     id_to_bbox[label.id] = bbox
                     id_to_name[label.id] = name - 1
-
-
 
         # print([i.type for i in frame.laser_labels])
         for obj in frame.laser_labels:
@@ -658,4 +679,3 @@ if __name__ == '__main__':
 
     converter = WaymoToKITTI(args.load_dir, args.save_dir, args.split, args.num_proc)
     converter.convert()
-
