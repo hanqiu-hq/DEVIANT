@@ -9,6 +9,7 @@ sys.dont_write_bytecode = True
 sys.path.append(os.getcwd())
 np.set_printoptions(suppress=True)
 
+
 def mkdir_if_missing(directory, delete_if_exist=False):
     """
     Recursively make a directory structure even if missing.
@@ -23,6 +24,7 @@ def mkdir_if_missing(directory, delete_if_exist=False):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+
 def make_symlink_or_copy(src_path, intended_path, MAKE_SYMLINK = True):
     if not os.path.exists(intended_path):
         if MAKE_SYMLINK:
@@ -31,33 +33,33 @@ def make_symlink_or_copy(src_path, intended_path, MAKE_SYMLINK = True):
             command = "cp " + src_path + " " + intended_path
             os.system(command)
 
+
 curr_folder = os.getcwd()
 kitti_org_train = dict()
-kitti_org_train['cal'] = os.path.join(curr_folder, 'training_org', 'replace', 'calib')
+# kitti_org_train['cal'] = os.path.join(curr_folder, 'training_org', 'replace', 'calib')
 kitti_org_train['ims'] = os.path.join(curr_folder, 'training_org', 'replace', 'image_0')
-kitti_org_train['lab'] = os.path.join(curr_folder, 'training_org', 'replace', 'label_0')
+# kitti_org_train['lab'] = os.path.join(curr_folder, 'training_org', 'replace', 'label_0')
 # kitti_org_train['dep'] = os.path.join(curr_folder, 'training_org','replace', 'projected_points_0')
-
 
 kitti_tra = dict()
 split = "training"
-kitti_tra['cal'] = os.path.join(curr_folder, split, 'calib')
+# kitti_tra['cal'] = os.path.join(curr_folder, split, 'calib')
 kitti_tra['ims'] = os.path.join(curr_folder, split, 'image')
-kitti_tra['lab'] = os.path.join(curr_folder, split, 'label')
+# kitti_tra['lab'] = os.path.join(curr_folder, split, 'label')
 # kitti_tra['dep'] = os.path.join(curr_folder, split, 'depth')
 
 kitti_org_val = dict()
-kitti_org_val['cal'] = os.path.join(curr_folder, 'validation_org', 'replace', 'calib')
+# kitti_org_val['cal'] = os.path.join(curr_folder, 'validation_org', 'replace', 'calib')
 kitti_org_val['ims'] = os.path.join(curr_folder, 'validation_org', 'replace', 'image_0')
-kitti_org_val['lab'] = os.path.join(curr_folder, 'validation_org', 'replace', 'label_0')
+# kitti_org_val['lab'] = os.path.join(curr_folder, 'validation_org', 'replace', 'label_0')
 # kitti_org_val['dep'] = os.path.join(curr_folder, 'validation_org','replace', 'projected_points_0')
 
 
 kitti_val = dict()
 split = "validation"
-kitti_val['cal'] = os.path.join(curr_folder, split, 'calib')
+# kitti_val['cal'] = os.path.join(curr_folder, split, 'calib')
 kitti_val['ims'] = os.path.join(curr_folder, split, 'image')
-kitti_val['lab'] = os.path.join(curr_folder, split, 'label')
+# kitti_val['lab'] = os.path.join(curr_folder, split, 'label')
 
 
 tra_org_file = os.path.join(curr_folder, 'ImageSets/train_org.txt')
@@ -66,14 +68,14 @@ tra_file     = os.path.join(curr_folder, 'ImageSets/train.txt')
 val_file     = os.path.join(curr_folder, 'ImageSets/val.txt')
 
 # mkdirs
-mkdir_if_missing(kitti_tra['cal'])
+# mkdir_if_missing(kitti_tra['cal'])
 mkdir_if_missing(kitti_tra['ims'])
-mkdir_if_missing(kitti_tra['lab'])
+# mkdir_if_missing(kitti_tra['lab'])
 # mkdir_if_missing(kitti_tra['dep'])
 
-mkdir_if_missing(kitti_val['cal'])
+# mkdir_if_missing(kitti_val['cal'])
 mkdir_if_missing(kitti_val['ims'])
-mkdir_if_missing(kitti_val['lab'])
+# mkdir_if_missing(kitti_val['lab'])
 # mkdir_if_missing(kitti_val['dep'])
 
 #===================================================================================================
@@ -96,22 +98,23 @@ for line in text_lines:
         seg, id = parsed
         new_id = '{:06d}'.format(imind)
 
-        org_calib_path = os.path.join(kitti_org_train['cal'].replace('replace', seg), id + '.txt')
-        org_label_path = os.path.join(kitti_org_train['lab'].replace('replace', seg), id + '.txt')
+        # org_calib_path = os.path.join(kitti_org_train['cal'].replace('replace', seg), id + '.txt')
+        # org_label_path = os.path.join(kitti_org_train['lab'].replace('replace', seg), id + '.txt')
         org_image_path = os.path.join(kitti_org_train['ims'].replace('replace', seg), id + '.png')
 
         # If any of the calib/label/image is missing
-        if not os.path.exists(org_calib_path) or not os.path.exists(org_label_path) or not os.path.exists(org_image_path):
+        # if not os.path.exists(org_calib_path) or not os.path.exists(org_label_path) or not os.path.exists(org_image_path):
+        if not os.path.exists(org_image_path):
             print("{}/{} not found ...".format(seg, id))
             imind += 1
             continue
 
-        new_calib_path = os.path.join(kitti_tra['cal'], str(new_id) + '.txt')
-        new_label_path = os.path.join(kitti_tra['lab'], str(new_id) + '.txt')
+        # new_calib_path = os.path.join(kitti_tra['cal'], str(new_id) + '.txt')
+        # new_label_path = os.path.join(kitti_tra['lab'], str(new_id) + '.txt')
         new_image_path = os.path.join(kitti_tra['ims'], str(new_id) + '.png')
 
-        make_symlink_or_copy(org_calib_path, new_calib_path)
-        make_symlink_or_copy(org_label_path, new_label_path, MAKE_SYMLINK = True)
+        # make_symlink_or_copy(org_calib_path, new_calib_path)
+        # make_symlink_or_copy(org_label_path, new_label_path, MAKE_SYMLINK = True)
         make_symlink_or_copy(org_image_path, new_image_path)
         # make_symlink_or_copy(os.path.join(kitti_org_train['dep'].replace('replace', seg), id + '.npy'), os.path.join(kitti_tra['dep'], str(new_id) + '.npy'))
 
@@ -148,22 +151,23 @@ for line in text_lines:
         seg, id = parsed
         new_id = '{:06d}'.format(imind)
 
-        org_calib_path = os.path.join(kitti_org_val['cal'].replace('replace', seg), id + '.txt')
-        org_label_path = os.path.join(kitti_org_val['lab'].replace('replace', seg), id + '.txt')
+        # org_calib_path = os.path.join(kitti_org_val['cal'].replace('replace', seg), id + '.txt')
+        # org_label_path = os.path.join(kitti_org_val['lab'].replace('replace', seg), id + '.txt')
         org_image_path = os.path.join(kitti_org_val['ims'].replace('replace', seg), id + '.png')
 
         # If any of the calib/label/image is missing
-        if not os.path.exists(org_calib_path) or not os.path.exists(org_label_path) or not os.path.exists(org_image_path):
+        # if not os.path.exists(org_calib_path) or not os.path.exists(org_label_path) or not os.path.exists(org_image_path):
+        if not os.path.exists(org_image_path):
             print("{}/{} not found ...".format(seg, id))
             imind += 1
             continue
 
-        new_calib_path = os.path.join(kitti_val['cal'], str(new_id) + '.txt')
-        new_label_path = os.path.join(kitti_val['lab'], str(new_id) + '.txt')
+        # new_calib_path = os.path.join(kitti_val['cal'], str(new_id) + '.txt')
+        # new_label_path = os.path.join(kitti_val['lab'], str(new_id) + '.txt')
         new_image_path = os.path.join(kitti_val['ims'], str(new_id) + '.png')
 
-        make_symlink_or_copy(org_calib_path, new_calib_path)
-        make_symlink_or_copy(org_label_path, new_label_path, MAKE_SYMLINK = True)
+        # make_symlink_or_copy(org_calib_path, new_calib_path)
+        # make_symlink_or_copy(org_label_path, new_label_path, MAKE_SYMLINK = True)
         make_symlink_or_copy(org_image_path, new_image_path)
         # make_symlink_or_copy(os.path.join(kitti_org_val['dep'].replace('replace', seg), id + '.npy'), os.path.join(kitti_val['dep'], str(new_id) + '.npy'))
 

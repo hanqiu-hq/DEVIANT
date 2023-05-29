@@ -145,7 +145,7 @@ class WaymoToKITTI(object):
         self.create_folder()
 
         if tfrecord_name not in self.sampled_dict:
-            return 
+            return
 
         for frame_idx, data in enumerate(dataset):
             file_name = str(file_idx).zfill(3) + str(frame_idx).zfill(3)
