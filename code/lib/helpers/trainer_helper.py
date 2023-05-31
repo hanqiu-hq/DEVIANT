@@ -115,7 +115,8 @@ class Trainer(object):
             progress_bar.close()
             for key in disp_dict.keys():
                 disp_dict[key] /= trained_batch             
-        return disp_dict        
+        return disp_dict
+
     def train_one_epoch(self,loss_weights=None):
         self.model.train()
         disp_dict = {}
@@ -124,11 +125,12 @@ class Trainer(object):
             inputs = inputs.to(self.device)
             calibs = calibs.to(self.device)
             coord_ranges = coord_ranges.to(self.device)
-            for key in targets.keys(): targets[key] = targets[key].to(self.device)
+            for key in targets.keys():
+                targets[key] = targets[key].to(self.device)
             # train one batch
             self.optimizer.zero_grad()
             criterion = GupnetLoss(self.epoch)
-            outputs = self.model(inputs,coord_ranges,calibs,targets)
+            outputs = self.model(inputs, coord_ranges, calibs, targets)
             total_loss, loss_terms = criterion(outputs, targets)
             
             if loss_weights is not None:

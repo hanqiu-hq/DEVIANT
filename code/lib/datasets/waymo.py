@@ -42,7 +42,7 @@ class Waymo(data.Dataset):
                                        [1.8032, 2.1036, 4.8104],
                                        [1.7336, 0.8230, 1.7530],
                                        [0.6523, 0.6208, 0.1254]])
-                              
+
         # data split loading
         assert split in ['train', 'val', 'train_small', 'val_small', 'train_5k', 'train_10k', 'trainval', 'test'] or 'train' in split
         self.split = split
@@ -77,7 +77,7 @@ class Waymo(data.Dataset):
 
         # others
         self.downsample = 4
-        
+
     def get_image(self, idx):
         img_file = os.path.join(self.image_dir, '%06d.png' % idx)
         assert os.path.exists(img_file)
@@ -86,7 +86,6 @@ class Waymo(data.Dataset):
         img_cv_rgb = cv2.cvtColor(img     , cv2.COLOR_BGR2RGB)
         img_pil    = Image.fromarray(img_cv_rgb)
         return  img_pil  # (H, W, 3) RGB mode
-
 
     def get_label(self, idx):
         label_file = os.path.join(self.label_dir, '%06d.txt' % idx)

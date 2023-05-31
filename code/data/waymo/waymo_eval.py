@@ -158,7 +158,33 @@ class DetectionMetricsEstimatorTest(tf.test.TestCase):
                np.array(gt_score, dtype=np.float32), \
                np.array(gt_diff, dtype=np.uint8)
 
-    def _BuildConfig(self):
+    def _BuildConfig_iou05(self):
+        config = metrics_pb2.Config()
+        # pdb.set_trace()
+        config_text = """
+    num_desired_score_cutoffs: 11
+    breakdown_generator_ids: OBJECT_TYPE
+    breakdown_generator_ids: RANGE
+    difficulties {
+    levels: 1
+    levels: 2
+    }
+    difficulties {
+    levels: 1
+    levels: 2
+    }
+    matcher_type: TYPE_HUNGARIAN
+    iou_thresholds: 0.0
+    iou_thresholds: 0.5
+    iou_thresholds: 0.3
+    iou_thresholds: 0.3
+    iou_thresholds: 0.3
+    box_type: TYPE_3D
+    """
+        text_format.Merge(config_text, config)
+        return config
+
+    def _BuildConfig_iou07(self):
         config = metrics_pb2.Config()
         # pdb.set_trace()
         config_text = """
@@ -184,7 +210,7 @@ class DetectionMetricsEstimatorTest(tf.test.TestCase):
         text_format.Merge(config_text, config)
         return config
 
-    def _BuildGraph(self, graph):
+    def _BuildGraph(self, graph, iou):
         with graph.as_default():
             self._pd_frame_id = tf.compat.v1.placeholder(dtype=tf.int64)
             self._pd_bbox = tf.compat.v1.placeholder(dtype=tf.float32)
@@ -195,7 +221,7 @@ class DetectionMetricsEstimatorTest(tf.test.TestCase):
             self._gt_type = tf.compat.v1.placeholder(dtype=tf.uint8)
             self._gt_difficulty = tf.compat.v1.placeholder(dtype=tf.uint8)
             metrics = detection_metrics.get_detection_metric_ops(
-                config=self._BuildConfig(),
+                config=self._BuildConfig_iou07() if iou == 0.7 else self._BuildConfig_iou05(),
                 prediction_frame_id=self._pd_frame_id,
                 prediction_bbox=self._pd_bbox,
                 prediction_type=self._pd_type,
@@ -252,44 +278,45 @@ class DetectionMetricsEstimatorTest(tf.test.TestCase):
         pd_bbox, pd_type, pd_frame_id, pd_score, _, gt_bbox, gt_type, gt_frame_id, gt_score, difficulty = \
             self.get_boxes_from_txt(pd_set, gt_set, pd_dir, gt_dir)
 
-        graph = tf.Graph()
-        metrics = self._BuildGraph(graph)
-        with self.test_session(graph=graph) as sess:
-            sess.run(tf.compat.v1.initializers.local_variables())
-            if FLAGS.sanity:
-                # Pass on gt stuff as predictions
-                self._EvalUpdateOps(sess, graph, metrics, gt_frame_id, gt_bbox, gt_type,
-                                    gt_score, gt_frame_id, gt_bbox, gt_type, difficulty)
-            else:
-                self._EvalUpdateOps(sess, graph, metrics, pd_frame_id, pd_bbox, pd_type,
-                                    pd_score, gt_frame_id, gt_bbox, gt_type, difficulty)
+        for iou in [0.7, 0.5]:
+            graph = tf.Graph()
+            metrics = self._BuildGraph(graph, iou=iou)
+            with self.test_session(graph=graph) as sess:
+                sess.run(tf.compat.v1.initializers.local_variables())
+                if FLAGS.sanity:
+                    # Pass on gt stuff as predictions
+                    self._EvalUpdateOps(sess, graph, metrics, gt_frame_id, gt_bbox, gt_type,
+                                        gt_score, gt_frame_id, gt_bbox, gt_type, difficulty)
+                else:
+                    self._EvalUpdateOps(sess, graph, metrics, pd_frame_id, pd_bbox, pd_type,
+                                        pd_score, gt_frame_id, gt_bbox, gt_type, difficulty)
 
-            aps = self._EvalValueOps(sess, graph, metrics)
-            category_list  = ["VEHICLE", "CYCLIST", "PEDESTRIAN", "SIGN"]
-            level_list  = [1, 2]
-            metric_list = ["AP", "APH", "Recall@0.95"]
-            print("--------------------------------------------------------------------------------------------")
-            print("Class      | L |         {:11s}     |         {:11s}     |     {:11s}     ".format("AP_3D", "APH_3D", "Recall@0.95"))
-            print("--------------------------------------------------------------------------------------------")
-            for category in category_list:
-                for level in level_list:
-                    text = "{:10s} | {} ".format(category, level)
-                    key_list = ["OBJECT_TYPE_TYPE_{}_LEVEL_{}".format(category, level), \
-                                "RANGE_TYPE_{}_[0, 30)_LEVEL_{}".format(category, level),\
-                                "RANGE_TYPE_{}_[30, 50)_LEVEL_{}".format(category, level),\
-                                "RANGE_TYPE_{}_[50, +inf)_LEVEL_{}".format(category, level)]
-                    for metric in metric_list:
-                        key0 = os.path.join(key_list[0], metric)
-                        key1 = os.path.join(key_list[1], metric)
-                        key2 = os.path.join(key_list[2], metric)
-                        key3 = os.path.join(key_list[3], metric)
-                        # Report in percentage.
-                        multiplier = 100.0
-                        text += "| {:5.2f} {:5.2f} {:5.2f} {:5.2f} ".format(multiplier * aps[key0][0],
-                                                                            multiplier * aps[key1][0],
-                                                                            multiplier * aps[key2][0],
-                                                                            multiplier * aps[key3][0])
-                    print(text)
+                aps = self._EvalValueOps(sess, graph, metrics)
+                category_list  = ["VEHICLE", "CYCLIST", "PEDESTRIAN", "SIGN"]
+                level_list  = [1, 2]
+                metric_list = ["AP", "APH", "Recall@0.95"]
+                print("--------------------------------------------------------------------------------------------")
+                print("Class      | L |         {:11s}     |         {:11s}     |     {:11s}     ".format("AP_3D", "APH_3D", "Recall@0.95"))
+                print("--------------------------------------------------------------------------------------------")
+                for category in category_list:
+                    for level in level_list:
+                        text = "{:10s} | {} ".format(category, level)
+                        key_list = ["OBJECT_TYPE_TYPE_{}_LEVEL_{}".format(category, level), \
+                                    "RANGE_TYPE_{}_[0, 30)_LEVEL_{}".format(category, level),\
+                                    "RANGE_TYPE_{}_[30, 50)_LEVEL_{}".format(category, level),\
+                                    "RANGE_TYPE_{}_[50, +inf)_LEVEL_{}".format(category, level)]
+                        for metric in metric_list:
+                            key0 = os.path.join(key_list[0], metric)
+                            key1 = os.path.join(key_list[1], metric)
+                            key2 = os.path.join(key_list[2], metric)
+                            key3 = os.path.join(key_list[3], metric)
+                            # Report in percentage.
+                            multiplier = 100.0
+                            text += "| {:5.2f} {:5.2f} {:5.2f} {:5.2f} ".format(multiplier * aps[key0][0],
+                                                                                multiplier * aps[key1][0],
+                                                                                multiplier * aps[key2][0],
+                                                                                multiplier * aps[key3][0])
+                        print(text)
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
